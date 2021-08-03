@@ -34,13 +34,40 @@ jobs:
       - gcp-gcr/build-image:
           image: hello
           registry-url: gcr.io
-          tag: v1
+          tag: v2
       - gcp-gcr/push-image:
           image: hello
           registry-url: gcr.io
-          tag: v1
+          tag: v2
+  Deploy:
+    description: Deploy application to Google Kubernetes Engine
+    machine: true
+
+    steps:
+      - checkout
+      - gcp-cli/install
+      - gcp-gke/install
+      - gcp-gke/init
+      
+      - run:
+         command: |
+           
+           gcloud config set project $GOOGLE_PROJECT_ID
+           gcloud container clusters get-credentials test-cluster --zone us-central1-c --project $GOOGLE_PROJECT_ID
+      
+      - gcp-gke/rollout-image:
+                     
+            deployment: test-cluster #This is the name of cluster
+            image: gcr.io/devtools-317213/hello:v2
+            container: hello
+
 workflows:
-  sample:
+  hello-workflow:
     jobs:
       - Build
-      - Push
+      - Push:
+          requires:
+            - Build
+      - Deploy:
+          requires:
+            - Push
