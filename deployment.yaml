@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: hello
-        image: isx46410800/hello:latest
+        image: gcr.io/devtools-317213/hello:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000

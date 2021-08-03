@@ -1,0 +1,68 @@
+
+version: 2.1
+orbs:
+  node: circleci/node@4.1
+  gcp-cli: circleci/gcp-cli@2.2.0
+  gcp-gke: circleci/gcp-gke@0.1.0
+  gcp-gcr: circleci/gcp-gcr@0.13.0
+  kubernetes: circleci/kubernetes@0.12.0
+  
+
+jobs:
+  Build:  
+    docker:
+      - image: cimg/node:15.1
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+  Push:
+    executor: gcp-gcr/default
+    steps:
+      - checkout
+      - gcp-gcr/gcr-auth
+      - gcp-gcr/build-image:
+          image: hello
+          registry-url: gcr.io
+          tag: v2
+      - gcp-gcr/push-image:
+          image: hello
+          registry-url: gcr.io
+          tag: v2
+  Deploy:
+    description: Deploy application to Google Kubernetes Engine
+    machine: true
+
+    steps:
+      - checkout
+      - gcp-cli/install
+      - gcp-gke/install
+      - gcp-gke/init
+      
+      - run:
+         command: |
+           
+           gcloud config set project $GOOGLE_PROJECT_ID
+           gcloud container clusters get-credentials test-cluster --zone us-central1-c --project $GOOGLE_PROJECT_ID
+           kubectl set image deployment/hello hello=gcr.io/devtools-317213/hello:v2
+
+workflows:
+  hello-workflow:
+    jobs:
+      - Build
+      - Push:
+          requires:
+            - Build
+      - Deploy:
+          requires:
+            - Push
