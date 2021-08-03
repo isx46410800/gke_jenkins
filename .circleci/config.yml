@@ -54,12 +54,7 @@ jobs:
            
            gcloud config set project $GOOGLE_PROJECT_ID
            gcloud container clusters get-credentials test-cluster --zone us-central1-c --project $GOOGLE_PROJECT_ID
-      
-      - gcp-gke/rollout-image:
-                     
-            deployment: test-cluster #This is the name of cluster
-            image: gcr.io/devtools-317213/hello:v2
-            container: hello
+           kubectl set image deployment/hello hello=gcr.io/devtools-317213/hello:v2
 
 workflows:
   hello-workflow:
