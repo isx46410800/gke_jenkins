@@ -59,7 +59,7 @@ jobs:
                      
             deployment: test-cluster #This is the name of cluster
             image: gcr.io/devtools-317213/hello:v2
-            container: test-cluster
+            container: hello
 
 workflows:
   hello-workflow:
